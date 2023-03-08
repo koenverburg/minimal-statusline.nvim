@@ -15,8 +15,6 @@ end
 
 local colors_keys = {
   Statusline = { fg = "none", bg = "none", style = "none" },
-  -- TabLineSel = { fg = "none", bg = "none", style = "none" },
-  -- TabLineFill = { fg = "none", bg = "none", style = "none" },
   -- MTReset = { fg = "none", bg = "none", style = "none" },
   -- MTActive = { fg = "#ffffff", style = "underline,bold" },
 }
@@ -29,12 +27,30 @@ end
 
 local _sep = "━"
 local s = {
+  sep = _sep,
   left = _sep .. " ",
-  middle = _sep,
   right = " " .. _sep,
 }
 
 local extensions = {}
+
+extensions.lsp = function ()
+  local buffer = api.nvim_get_current_buf()
+  local buffer_clients = vim.lsp.buf_get_clients(buffer)
+  local attached_lsps = {}
+
+  for _, v in pairs(buffer_clients) do
+    table.insert(attached_lsps, v.name)
+  end
+
+  if #attached_lsps == 0 then
+    return ""
+  end
+
+  local lsps = table.concat(attached_lsps, ",")
+
+  return " lsp (" .. lsps .. ") "
+end
 
 extensions.get_mode = function()
   local alias = {
@@ -69,171 +85,46 @@ extensions.shortend_file = function()
   return fname
 end
 
+extensions.filetype = function()
+  local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
+  return buf_ft
+end
+
 
 local builtin = {}
----   t S   File name (tail) of file in the buffer.
-builtin.tail = "%t"
 
----   m F   Modified flag, text is "[+]"; "[-]" if 'modifiable' is off.
 builtin.modified = "%m"
-builtin.modified_flag = "%m"
-
----   M F   Modified flag, text is ",+" or ",-".
-builtin.modified_list = "%M"
-
----   r F   Readonly flag, text is "[RO]".
-builtin.readonly = "%r"
-
----   r F   Readonly flag, text is "[RO]".
-builtin.readonly_flag = "%r"
-
----   R F   Readonly flag, text is ",RO".
-builtin.readonly_list = "%R"
-
----   h F   Help buffer flag, text is "[help]".
-builtin.help = "%h"
-
----   h F   Help buffer flag, text is "[help]".
-builtin.help_flag = "%h"
-
----   H F   Help buffer flag, text is ",HLP".
-builtin.help_list = "%H"
-
----   w F   Preview window flag, text is "[Preview]".
-builtin.preview = "%w"
-
----   w F   Preview window flag, text is "[Preview]".
-builtin.preview_flag = "%w"
-
----   W F   Preview window flag, text is ",PRV".
-builtin.preview_list = "%W"
-
----   y F   Type of file in the buffer, e.g., "[vim]".  See 'filetype'.
-builtin.filetype = "%y"
-
----   y F   Type of file in the buffer, e.g., "[vim]".  See 'filetype'.
-builtin.filetype_flag = "%y"
-
----   Y F   Type of file in the buffer, e.g., ",VIM".  See 'filetype'.
-builtin.filetype_list = "%Y"
-
----   q S   "[Quickfix List]", "[Location List]" or empty.
-builtin.quickfix = "%q"
-
----   q S   "[Quickfix List]", "[Location List]" or empty.
-builtin.quickfix_flag = "%q"
-
----   q S   "[Quickfix List]", "[Location List]" or empty.
-builtin.locationlist = "%q"
-
----   q S   "[Quickfix List]", "[Location List]" or empty.
-builtin.locationlist_flag = "%q"
-
----   k S   Value of "b:keymap_name" or 'keymap' when |:lmap| mappings are being used: "<keymap>"
-builtin.keymap = "%k"
-
----   n N   Buffer number.
-builtin.bufnr = "%n"
-
----   n N   Buffer number.
-builtin.buffer_number = "%n"
-
----   b N   Value of character under cursor.
-builtin.character = "%b"
-
----   b N   Value of character under cursor.
-builtin.character_decimal = "%b"
-
----   B N   As above, in hexadecimal.
-builtin.character_hex = "%B"
-
---- <pre>
----   o N   Byte number in file of byte under cursor, first byte is 1.
----         Mnemonic: Offset from start of file (with one added)
---- </pre>
-builtin.byte_number = "%o"
-builtin.byte_number_decimal = "%o"
-
----   O N   As above, in hexadecimal.
-builtin.byte_number_hex = "%O"
-
----   N N   Printer page number.  (Only works in the 'printheader' option.)
-builtin.printer_page = "%N"
-
----   l N   Line number.
 builtin.line = "%l"
-
----   l N   Line number.
 builtin.line_number = builtin.line
-
---- TODO: Document
-builtin.line_with_width = function(width)
-  return "%-0" .. width .. "l"
-end
-
----   L N   Number of lines in buffer.
 builtin.number_of_lines = "%L"
-
----   c N   Column number.
-builtin.column = "%c"
-
----   c N   Column number.
-builtin.column_number = builtin.column
-
---- TODO: Document
-builtin.column_with_width = function(width)
-  return "%-0" .. width .. "c"
-end
-
----   v N   Virtual column number.
-builtin.virtual_column = "%v"
-
----   v N   Virtual column number.
-builtin.virtual_column_number = "%v"
-
----   V N   Virtual column number as -{num}.  Not displayed if equal to 'c'.
---- TODO: This isn't a good name.
-builtin.virtual_column_number_long = "V"
-
----   p N   Percentage through file in lines as in |CTRL-G|.
-builtin.percentage_through_file = "%3p"
-
---- <pre>
----   P S   Percentage through file of displayed window.  This is like the
----         percentage described for 'ruler'.  Always 3 in length, unless
----         translated.
---- </pre>
-builtin.percentage_through_window = "%P"
-
---- <pre>
----   a S   Argument list status as in default title.  ({current} of {max})
----         Empty if the argument file count is zero or one.
---- </pre>
-builtin.argument_list_status = "%a"
 
 local function render()
   local segments = {
-    " ",
     s.left,
     extensions.get_mode(),
     s.right,
 
-    "%=",
+    s.left,
+    "git",
+    s.right,
 
     s.left,
     extensions.shortend_file(),
+    builtin.modified,
     s.right,
 
     "%=",
+    extensions.lsp(),
+
+    s.left,
+    extensions.filetype(),
+    s.right,
 
     s.left,
     builtin.line,
     "/",
     builtin.number_of_lines,
     s.right,
-    s.left,
-    string.sub(builtin.filetype, 1),
-    " ",
   }
 
   return table.concat(segments, "")
@@ -242,8 +133,6 @@ end
 -- function M.run(winid)
 --   return M.render()
 -- end
-
-function M.regenerate(winid) end
 
 function M.setup(opts)
   vim.cmd([[set fillchars+=stl:━]])
