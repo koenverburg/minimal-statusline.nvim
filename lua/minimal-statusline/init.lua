@@ -1,130 +1,43 @@
 local co, api, fn = coroutine, vim.api, vim.fn
+local provider = require('minimal-statusline.provider')
+local utils    = require('minimal-statusline.utils')
+local builtins = require('minimal-statusline.builtins')
 local M = {}
 
-local function path_sep()
-  return vim.loop.os_uname().sysname == "Windows_NT" and "\\" or "/"
-end
 
-local highlight = function(group, properties)
-  local fg = properties.fg == nil and "" or "guifg=" .. properties.fg
-  local bg = properties.bg == nil and "" or "guibg=" .. properties.bg
-  local style = properties.style == nil and "" or "gui=" .. properties.style
-  local cmd = table.concat({ "highlight", group, bg, fg, style }, " ")
-  vim.cmd(cmd)
-end
+local wrap = utils.wrap
+
+-- local function path_sep()
+--   return vim.loop.os_uname().sysname == "Windows_NT" and "\\" or "/"
+-- end
+
 
 local colors_keys = {
   Statusline = { fg = "none", bg = "none", style = "none" },
+  -- StatuslineNC = { fg = "none", bg = "none", style = "none" },
   -- MTReset = { fg = "none", bg = "none", style = "none" },
   -- MTActive = { fg = "#ffffff", style = "underline,bold" },
 }
 
-function M.set_highlights()
-  for hl, col in pairs(colors_keys) do
-    highlight(hl, col)
-  end
-end
-
-local _sep = "━"
-local s = {
-  sep = _sep,
-  left = _sep .. " ",
-  right = " " .. _sep,
-}
-
-local extensions = {}
-
-extensions.lsp = function ()
-  local buffer = api.nvim_get_current_buf()
-  local buffer_clients = vim.lsp.buf_get_clients(buffer)
-  local attached_lsps = {}
-
-  for _, v in pairs(buffer_clients) do
-    table.insert(attached_lsps, v.name)
-  end
-
-  if #attached_lsps == 0 then
-    return ""
-  end
-
-  local lsps = table.concat(attached_lsps, ",")
-
-  return " lsp (" .. lsps .. ") "
-end
-
-extensions.get_mode = function()
-  local alias = {
-    n = "NORMAL",
-    i = "INSERT",
-    niI = "CTRL-O",
-    R = "REPLAC",
-    c = "C-LINE",
-    v = "VISUAL",
-    V = "V-LINE",
-    [""] = "VBLOCK",
-    s = "SELEKT",
-    S = "S-LINE",
-    [""] = "SBLOCK",
-    t = "TERMNL",
-    nt = "NORM-L",
-    ntT = "C-\\C-O",
-  }
-
-  local mode = api.nvim_get_mode().mode
-
-  return alias[mode] or alias[string.sub(mode, 1, 1)] or "UNK"
-end
-
-extensions.shortend_file = function()
-  local fname = api.nvim_buf_get_name(0)
-  local sep = path_sep()
-  local parts = vim.split(fname, sep, { trimempty = true })
-  local index = #parts - 1 <= 0 and 1 or #parts - 1
-
-  fname = table.concat({ unpack(parts, index) }, sep)
-  return fname
-end
-
-extensions.filetype = function()
-  local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
-  return buf_ft
-end
-
-
-local builtin = {}
-
-builtin.modified = "%m"
-builtin.line = "%l"
-builtin.line_number = builtin.line
-builtin.number_of_lines = "%L"
-
 local function render()
   local segments = {
-    s.left,
-    extensions.get_mode(),
-    s.right,
+    wrap(provider.get_mode()),
+    -- wrap(utils.get_icon("git")),
 
-    s.left,
-    "git",
-    s.right,
+    builtins.split,
 
-    s.left,
-    extensions.shortend_file(),
-    builtin.modified,
-    s.right,
+    wrap(
+      provider.shortend_file() .. builtins.modified
+    ),
+    wrap(provider.filetype()),
 
-    "%=",
-    extensions.lsp(),
+    builtins.split,
 
-    s.left,
-    extensions.filetype(),
-    s.right,
+    wrap(provider.lsp()),
 
-    s.left,
-    builtin.line,
-    "/",
-    builtin.number_of_lines,
-    s.right,
+    wrap(
+      builtins.line .. "/" .. builtins.number_of_lines
+    )
   }
 
   return table.concat(segments, "")
@@ -136,13 +49,14 @@ end
 
 function M.setup(opts)
   vim.cmd([[set fillchars+=stl:━]])
-  local winid = vim.api.nvim_get_current_win()
+  -- local winid = vim.api.nvim_get_current_win()
 
   M.set_highlights()
 
   api.nvim_create_autocmd(opts.regenerate_autocmds, {
     callback = function()
       vim.opt.stl = render()
+      -- M.set_highlights()
     end,
   })
 
@@ -161,7 +75,6 @@ function M.setup(opts)
 end
 
 M.setup({
-  enabled = true,
   regenerate_autocmds = { "WinEnter", "WinLeave", "DiagnosticChanged", "ModeChanged", "BufEnter", "BufWritePost" },
 })
 
