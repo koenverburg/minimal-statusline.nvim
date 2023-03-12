@@ -46,6 +46,22 @@ function utils.set_highlights(groups)
 	end
 end
 
+
+function utils.get_icon_by_filetype(name)
+	local ok, icons = pcall(require, "nvim-web-devicons")
+
+	if not ok then
+		return ""
+	end
+
+	local icon, _ = icons.get_icon_by_filetype(name)
+	if not icon then
+		return ""
+	end
+
+	return icon
+end
+
 function utils.get_icon(name)
 	local ok, icons = pcall(require, "nvim-web-devicons")
 
@@ -162,7 +178,7 @@ local function render()
 		builtins.split,
 
 		utils.wrap_multiple({
-			utils.get_icon(provider.filetype()),
+			utils.get_icon_by_filetype(provider.filetype()),
 			provider.shortend_file(),
       builtins.modified or "",
 		}),
