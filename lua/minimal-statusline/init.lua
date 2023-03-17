@@ -33,6 +33,14 @@ function utils.wrap(text)
 	return utils.separator.left .. text .. utils.separator.right
 end
 
+function utils.wrap_space(text)
+	if not text or text == "" then
+		return
+	end
+
+	return builtins.space .. text .. builtins.space
+end
+
 local function path_sep()
 	return vim.loop.os_uname().sysname == "Windows_NT" and "\\" or "/"
 end
@@ -169,7 +177,20 @@ end
 provider.file_name = function()
 	local icon = utils.get_icon_by_filetype(provider.filetype())
 
-	return icon .. " " .. "%f" .. builtins.modified
+	local fname = vim.api.nvim_buf_get_name(0)
+  print(fname)
+
+  if fname == "[Scratch]" then
+    return ""
+  end
+
+	local sep = path_sep()
+	local parts = vim.split(fname, sep, { trimempty = true })
+	local index = #parts - 1 <= 0 and 1 or #parts - 1
+	fname = table.concat({ unpack(parts, index) }, sep)
+
+
+	return icon .. " " .. fname .. builtins.modified
 end
 
 local function isNil(val)
@@ -218,26 +239,17 @@ local function render()
 	local segments = {
 		provider.get_mode(),
     builtins.space,
-		-- utils.wrap(provider.get_mode()),
 
 		provider.git_branch(),
     builtins.space,
-		-- utils.wrap(provider.git_branch()),
+
+		builtins.split,
+    (provider.file_name() ~= " %m" and utils.wrap_space(provider.file_name()) or ""),
 
 		builtins.split,
     builtins.space,
-		provider.file_name(),
+    (provider.lsp_enabled and provider.lsp() or provider.filetype()),
     builtins.space,
-		-- utils.wrap(provider.file_name()),
-
-		builtins.split,
-    builtins.space,
-    lsp_or_filetype(),
-    builtins.space,
-    -- builtins.space,
-		-- utils.wrap(provider.filetype()),
-		-- provider.filetype(),
-		-- utils.wrap(builtins.line .. "/" .. builtins.number_of_lines), -- move to winline
 	}
 
 	return styler.normal(table.concat(segments, ""))
