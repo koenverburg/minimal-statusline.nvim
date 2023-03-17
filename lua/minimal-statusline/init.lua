@@ -58,12 +58,12 @@ function utils.get_icon_by_filetype(name)
 		return ""
 	end
 
-	local icon, _ = icons.get_icon_by_filetype(name)
+	local icon, color = icons.get_icon_by_filetype(name)
 	if not icon then
 		return ""
 	end
 
-	return icon .. " "
+	return "%#" ..color .. "#" .. icon .. "%#Normal#"
 end
 
 function utils.get_icon(name)
@@ -153,10 +153,11 @@ provider.git_branch = function()
 		return ""
 	end
 
-	local branch = vim.b.gitsigns_status_dict["head"]
 
+	local branch = vim.b.gitsigns_status_dict["head"]
 	branch = (not branch or branch == 0) and "" or tostring(branch)
-	local icon = utils.get_icon("git")
+
+  local icon = utils.get_icon_by_filetype("git")
 
 	if not icon then
 		return branch
@@ -168,7 +169,7 @@ end
 provider.file_name = function()
 	local icon = utils.get_icon_by_filetype(provider.filetype())
 
-	return icon .. "%f" .. builtins.modified
+	return icon .. " " .. "%f" .. builtins.modified
 end
 
 local function isNil(val)
@@ -263,6 +264,6 @@ function M.setup()
 		})
 end
 
--- M.setup()
+M.setup()
 
 return M
