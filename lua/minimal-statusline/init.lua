@@ -9,31 +9,7 @@ builtins.space = " "
 
 local utils = {}
 
-Sep = "━"
-utils.separator = {
-	sep = Sep,
-	left = Sep .. " ",
-	right = " " .. Sep,
-}
-
-function utils.wrap_multiple(elements)
-	vim.tbl_filter(function(el)
-		return #el > 0
-	end, elements)
-
-	local text = table.concat(elements, " ")
-	return utils.separator.left .. text .. utils.separator.right
-end
-
 function utils.wrap(text)
-	if not text or text == "" then
-		return
-	end
-
-	return utils.separator.left .. text .. utils.separator.right
-end
-
-function utils.wrap_space(text)
 	if not text or text == "" then
 		return
 	end
@@ -244,7 +220,7 @@ local function render()
     builtins.space,
 
 		builtins.split,
-    (provider.file_name() ~= " %m" and utils.wrap_space(provider.file_name()) or ""),
+    (provider.file_name() ~= " %m" and utils.wrap(provider.file_name()) or ""),
 
 		builtins.split,
     builtins.space,
