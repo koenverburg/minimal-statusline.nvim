@@ -165,7 +165,7 @@ provider.git_changes = function()
   if #result > 0 then
     changes = vim.split(result[1], ",", { trimempty = true })
   else
-    return
+    return ""
   end
 
   local toFirstPart = function (val)
