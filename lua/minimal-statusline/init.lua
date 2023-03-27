@@ -168,7 +168,10 @@ provider.git_changes = function()
     return ""
   end
 
-  local toFirstPart = function (val)
+  local extractNumberValue = function(val)
+    if not val then
+      return ""
+    end
     local parts = vim.split(val, " ", {trimempty = true})
     if not parts then return "" end
     if #parts > 0 then
@@ -184,9 +187,9 @@ provider.git_changes = function()
     return colors[type] .. chars[type] .. value .. "%#Normal#" .. " "
   end
 
-  local files = toFirstPart(changes[1])
-  local inserts = toFirstPart(changes[2])
-  local removed = toFirstPart(changes[3])
+  local files = extractNumberValue(changes[1])
+  local inserts = extractNumberValue(changes[2])
+  local removed = extractNumberValue(changes[3])
 
   return style('files', files) .. style('changed', inserts) .. style('removed', removed)
 end
@@ -276,7 +279,7 @@ provider.file_name = function()
   fname = table.concat({ unpack(parts, index) }, sep)
 
   if #fname > 50 then
-    fname = table.concat({ unpack(parts, index + 1) }, sep)
+    fname = table.concat({ unpack(parts, index + 2) }, sep)
   end
 
   return icon .. " " .. fname .. builtins.modified
@@ -323,14 +326,14 @@ local function render()
 end
 
 local colors_keys = {
-  Statusline = { fg = "#ffffff", bg = "none", style = "none" },
+  Statusline = { fg = "#ffffff", bg = "gray", style = "none" },
 
   MSBold = { fg = "#ffffff", bg = "none", style = "bold" },
   MSNormal = { fg = "#ffffff", bg = "none", style = "none" },
 }
 
 function M.setup()
-  vim.cmd([[set fillchars+=stl:━]])
+  -- vim.cmd([[set fillchars+=stl:━]])
 
   local regenerate_autocmds = { "WinEnter", "WinLeave", "ModeChanged", "LspAttach", "BufEnter", "BufWritePost" }
 
