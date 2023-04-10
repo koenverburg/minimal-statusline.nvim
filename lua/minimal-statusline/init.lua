@@ -260,17 +260,14 @@ provider.git_branch = function()
 end
 
 provider.file_name = function()
-	-- local home = vim.env.HOME
-	-- local projectsDir = '/code/github/'
+	local home = vim.env.HOME
+	local projectsDir = '/code/github/'
 	local fname = vim.api.nvim_buf_get_name(0)
 	local icon = utils.get_icon_by_filetype(provider.filetype())
 
 	if fname == "[Scratch]" then
 		return ""
 	end
-	--
-	-- fname = fname:gsub(home, "", 1)
-	-- fname = fname:gsub(projectsDir, "", 1)
 	--
 	-- local sep = path_sep()
 	-- local parts = vim.split(fname, sep, { trimempty = true })
@@ -287,9 +284,12 @@ provider.file_name = function()
 	--   fname = table.concat({ unpack(parts, index + 1) }, sep)
 	-- end
 
-	if string.len(vim.fn.fnamemodify(fname, ":.")) > 50 then
-		fname = vim.fn.fnamemodify(fname, ":t")
-	end
+	-- if string.len(vim.fn.fnamemodify(fname, ":.")) > 50 then
+	-- end
+
+  fname = vim.fn.fnamemodify(fname, ":.")
+	fname = fname:gsub(home, "", 1)
+	fname = fname:gsub(projectsDir, "", 1)
 
 	return icon .. " " .. fname .. builtins.modified
 end
@@ -354,6 +354,6 @@ function M.setup()
 	})
 end
 
-M.setup()
+-- M.setup()
 
 return M
