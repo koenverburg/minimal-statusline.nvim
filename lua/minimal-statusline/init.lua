@@ -63,6 +63,10 @@ function M.setup()
 
 		"WinEnter",
 		"WinLeave",
+
+    "InsertEnter",
+    "InsertLeave",
+
 		"BufEnter",
 		"BufWritePost",
 
@@ -75,10 +79,10 @@ function M.setup()
 
 	vim.api.nvim_create_autocmd(regenerate_autocmds, {
 		callback = function()
-			-- utils.set_highlights(colors_keys)
 			vim.opt.stl = render()
 		end,
 	})
+  M.update_statusline()
 end
 
 function M.update_statusline()
@@ -100,6 +104,5 @@ function M.update_statusline()
 end
 
 M.setup()
-M.update_statusline()
 
 return M
